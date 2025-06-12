@@ -1,0 +1,26 @@
+import numpy as np
+
+class HybridGDLMC:
+    def __init__(self, sigma_0=1.0, lambda_=0.05, eta=0.01):
+        self.sigma_0 = sigma_0  # Initial noise magnitude
+        self.lambda_ = lambda_  # Noise decay rate
+        self.eta = eta          # Learning rate
+
+    def optimize(self, f, grad_f, x0, max_iter=500):
+        x = x0.copy()
+        trajectory = [x0]
+        
+        for t in range(max_iter):
+            sigma_t = self.sigma_0 * np.exp(-self.lambda_ * t)
+            noise = np.random.normal(0, np.sqrt(2 * self.eta * sigma_t), x.shape)
+            x = x - self.eta * grad_f(x) + noise
+            trajectory.append(x)
+        return np.array(trajectory)
+
+def obstacle_avoidance_cost(x, A, b, lambda_=0.1):
+    quadratic = np.linalg.norm(A @ x - b)**2
+    nonconvex = lambda_ * np.sum(np.sin(x)**2)
+    return quadratic + nonconvex
+
+def grad_obstacle_avoidance(x, A, b, lambda_=0.1):
+    return 2 * A.T @ (A @ x - b) + 2 * lambda_ * np.sin(x) * np.cos(x)
